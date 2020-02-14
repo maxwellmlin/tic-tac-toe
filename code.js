@@ -187,11 +187,18 @@ function getComputerMove(board) {
   
   // If "O" try to take middle and sides
   if (computerType == "O") {
-    if (board.middle == "") { return "middle"; }
-    if (board.top == "") { return "top"; }
-    if (board.bottom == "") { return "left"; }
-    if (board.left == "") { return "right"; }
-    if (board.right == "") { return "bottom"; }
+    if (board.middle == "") {
+      if (board.middle == "") { return "middle"; }
+      if (board.top == "") { return "top"; }
+      if (board.bottom == "") { return "left"; }
+      if (board.left == "") { return "right"; }
+      if (board.right == "") { return "bottom"; }
+    } else if (board.middle == "X") {
+      if (board.topLeft == "") { return "topLeft"; }
+      if (board.bottomRight == "") { return "bottomRight"; }
+      if (board.topRight == "") { return "topRight"; }
+      if (board.bottomLeft == "") { return "bottomLeft"; }
+    }
   }
   
   // If all spots are already taken pick a position at random
