@@ -7,7 +7,7 @@
 // TitleImage: https://cdn3.vectorstock.com/i/1000x1000/73/02/tic-tac-toe-xo-game-vector-23217302.jpg
 
 var currentPlayer = "X";
-var computerType; // For use in single player mode
+var computerType = ""; // For use in single player mode
 var turn = 1;
 var gameOver = false;
 
@@ -237,7 +237,7 @@ function updateUI(board) {
 
 function reset() {
   currentPlayer = "X";
-  computerType;
+  computerType = "";
   turn = 1;
   gameOver = false;
   
