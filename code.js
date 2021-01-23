@@ -1,16 +1,11 @@
-// Entire program done by me
+var currentPlayer = "X"; // Switches between "X" and "O" every turn
+var computer = ""; // In single-player, holds the type ("X" or "O") of the computer
+var turn = 1; // Increments by 1 every turn (used for computer movement and tie detection)
+var gameOver = false; // Once game is over, switches to true (disables gameplay buttons)
+var scoreX = 0; // X's score
+var scoreO = 0; // O's score
 
-// Image Sources
-// Tic-Tac-Toe Board: https://i.pinimg.com/originals/7f/d6/54/7fd654e4ed2675f4606bd72177eb1fb2.jpg
-// Description: 
-
-// TitleImage: https://cdn3.vectorstock.com/i/1000x1000/73/02/tic-tac-toe-xo-game-vector-23217302.jpg
-
-var currentPlayer = "X";
-var computerType = ""; // For use in single player mode
-var turn = 1;
-var gameOver = false;
-
+// Object used for keeping track of the gameboard
 var board = {
   topLeft: "",
   top: "",
@@ -23,93 +18,98 @@ var board = {
   bottomRight: "",
 };
 
-onEvent("onePlayer_button", "click", function() {
-  hideElement("onePlayer_button");
+// Prompt user for player type if they choose single-player
+onEvent("singlePlayer_button", "click", function() {
+  hideElement("singlePlayer_button");
   showElement("playerX_button");
   showElement("playerO_button");
 });
-
+// Set computer to "O" and start game
 onEvent("playerX_button", "click", function() {
-  computerType = "O";
+  computer = "O";
+  resetBoard();
   setScreen("gameplay_screen");
 });
+// Set computer to "X" and start game
 onEvent("playerO_button", "click", function() {
-  computerType = "X";
-  
-  // First computer move
-  playerMoved(getComputerMove(board));
+  computer = "X";
+  resetBoard();
   setScreen("gameplay_screen");
 });
 
+// Start game without computer
 onEvent("twoPlayers_button", "click", function() {
+  resetBoard();
   setScreen("gameplay_screen");
 });
 
+// Return to main menu and reset the main menu
 onEvent("mainMenu_button", "click", function() {
-  reset();
+  resetMain();
   setScreen("start_screen");
 });
+// Reset board only
+onEvent("restart_buton", "click", function() {
+  resetBoard();
+});
 
-// Gameplay Events
+// Gameplay Events: When a button is clicked call playerMove(position) with the clicked button's ID
 onEvent("topLeft_button", "click", function() {
-  playerMoved("topLeft");
+  playerMove("topLeft");
 });
 onEvent("top_button", "click", function() {
-  playerMoved("top");
+  playerMove("top");
 });
 onEvent("topRight_button", "click", function() {
-  playerMoved("topRight");
+  playerMove("topRight");
 });
 onEvent("left_button", "click", function() {
-  playerMoved("left");
+  playerMove("left");
 });
 onEvent("middle_button", "click", function() {
-  playerMoved("middle");
+  playerMove("middle");
 });
 onEvent("right_button", "click", function() {
-  playerMoved("right");
+  playerMove("right");
 });
 onEvent("bottomLeft_button", "click", function() {
-  playerMoved("bottomLeft");
+  playerMove("bottomLeft");
 });
 onEvent("bottom_button", "click", function() {
-  playerMoved("bottom");
+  playerMove("bottom");
 });
 onEvent("bottomRight_button", "click", function() {
-  playerMoved("bottomRight");
+  playerMove("bottomRight");
 });
 
-// Called whenever a button is placed or a computer makes its move
-function playerMoved(position) {
+// Called whenever a button is clicked or a computer makes its move
+function playerMove(position) {
+  // First, checks to make sure that the selected position is empty and the game is not over
   if (board[position] == "" && !gameOver) {
-    board[position] = currentPlayer;
+    board[position] = currentPlayer; // Updates board object with the new move
     
-    updateUI(board);
-    
-    var gameOverStatus = getGameStatus(board, currentPlayer);
-    if (gameOverStatus != undefined) {
-      endGame(gameOverStatus);
-      return;
+    // Checks if the game is over
+    var status = getGameStatus(board, currentPlayer);
+    // If getGameStatus() returned something, the game ended
+    if (status != undefined) {
+      status = endGame(status);
     }
     
-    currentPlayer = swapPlayer(currentPlayer);
-    setText("status_label", "Current Player: "+currentPlayer);
-    
+    // Start next turn
     turn++;
-    // End of Player's Turn
+    currentPlayer = swapPlayer(currentPlayer);
     
-    // Prompting computer's turn if applicable
-    if (currentPlayer == computerType) {
-      var computerMove = getComputerMove(board);
-      playerMoved(computerMove);
+    // At the end of every turn, update the UI
+    updateBoardUI(board, status);
+    
+    // Prompts computer if single-player
+    if (currentPlayer == computer) {
+      playerMove(getComputerMove(board));
     }
-  } else {
-    console.log("Attempted move: " + position);
-    console.log(board);
   }
 }
 
-// Switches the currentPlayer through two states: "X" and "O"
+// Returns the other player of two states: "X" or "O"
 function swapPlayer(player) {
   if (player == "X") {
     return "O";
@@ -118,8 +118,9 @@ function swapPlayer(player) {
   }
 }
 
+// Returns whether "currentPlayer" won or if the board is filled
 function getGameStatus(board, currentPlayer) {
-  // Variables for detecting win conditions; H - Horizontal, V - Vertical
+  // Variables for detecting win conditions; H means Horizontal, V means Vertical
   var topH = board.topLeft == currentPlayer && board.top == currentPlayer && board.topRight == currentPlayer;
   var middleH = board.left == currentPlayer && board.middle == currentPlayer && board.right == currentPlayer;
   var bottomH = board.bottomLeft == currentPlayer && board.bottom == currentPlayer && board.bottomRight == currentPlayer;
@@ -129,27 +130,20 @@ function getGameStatus(board, currentPlayer) {
   var downwardDiagonal = board.topLeft == currentPlayer && board.middle == currentPlayer && board.bottomRight == currentPlayer;
   var upwardDiagonal = board.bottomLeft == currentPlayer && board.middle == currentPlayer && board.topRight == currentPlayer;
   
+  // Return the currentPlayer if someone won; returns "Tie" if board is filled (turn 9)
   if (topH || middleH || bottomH || leftV || middleV || rightV || downwardDiagonal || upwardDiagonal) {
     return currentPlayer;
-  } else {
-    var filledSpots = 0;
-    for (var i in board) {
-      if (board[i] != "") {
-        filledSpots++;
-      }
-    }
-    if (filledSpots == 9) {
-      return "Tie";
-    }
+  } else if (turn == 9) {
+    return "Tie";
   }
 }
 
-
+// Returns the computer's move given the current board state
 function getComputerMove(board) {
   var tempBoard; // Copy of board
-  var position;
+  var position; // Key of board object
   
-  // Win if possible
+  // Win if possible (iterates through tempBoard and plays every available position looking for a win)
   for (position in board) {
     tempBoard = copyObject(board);
     
@@ -162,9 +156,9 @@ function getComputerMove(board) {
     }
   }
   
-  var tempPlayer = swapPlayer(currentPlayer);
+  var tempPlayer = swapPlayer(currentPlayer); // Opposite player
   
-  // Block if possible
+  // Block if possible (iterates through tempBoard and plays every possible position (as the opposite player) looking for a loss)
   for (position in board) {
     tempBoard = copyObject(board);
     
@@ -177,74 +171,127 @@ function getComputerMove(board) {
     }
   }
   
-  // If "X" try to take opposite corners
-  if (computerType == "X") {
+  // If computer is "X", try to take opposite corners to force a win
+  if (computer == "X") {
     if (board.topLeft == "") { return "topLeft"; }
     if (board.bottomRight == "") { return "bottomRight"; }
     if (board.topRight == "") { return "topRight"; }
     if (board.bottomLeft == "") { return "bottomLeft"; }
   }
   
-  // If "O" try to take middle and sides
-  if (computerType == "O") {
-    if (board.middle == "") {
-      if (board.middle == "") { return "middle"; }
-      if (board.top == "") { return "top"; }
-      if (board.bottom == "") { return "left"; }
-      if (board.left == "") { return "right"; }
-      if (board.right == "") { return "bottom"; }
-    } else if (board.middle == "X") {
+  // If computer is "O", defend
+  if (computer == "O") {
+    // If X took the middle, take corners to defend
+    // If X took a side, take middle and corners to defend
+    // If X took a corner, take middle sides to defend
+    if (board.middle == "X") {
       if (board.topLeft == "") { return "topLeft"; }
       if (board.bottomRight == "") { return "bottomRight"; }
       if (board.topRight == "") { return "topRight"; }
       if (board.bottomLeft == "") { return "bottomLeft"; }
+    } else if (board.top == "X" || board.left == "X" || board.right == "X" || board.bottom == "X") {
+      if (board.middle == "") { return "middle"; }
+      if (board.topLeft == "") { return "topLeft"; }
+      if (board.bottomRight == "") { return "bottomRight"; }
+      if (board.topRight == "") { return "topRight"; }
+      if (board.bottomLeft == "") { return "bottomLeft"; }
+    } else {
+      if (board.middle == "") { return "middle"; }
+      if (board.top == "") { return "top"; }
+      if (board.bottom == "") { return "bottom"; }
+      if (board.left == "") { return "left"; }
+      if (board.right == "") { return "right"; }
     }
   }
   
-  // If all spots are already taken pick a position at random
-  // (means player choose unoptimal spot so random positions will stil net in a win/tie)
-  console.log("Random Move");
+  // If all spots are already taken, pick an empty position at random
   for (position in board) {
     if (board[position] == "") { return position }
   }
 }
 
+// Ends the game, updating the player scores and returning the status message
 function endGame(result) {
   gameOver = true;
-
-  if (result != "Tie") {
-    setText("status_label", result+" won!");
-  } else {
-    setText("status_label", "Tie!");
+  
+  if (result == "X") {
+    scoreX++;
+  } else if (result == "O") {
+    scoreO++;
   }
+  
+  var status;
+  if (computer == "") {
+    if (result == "X" || result == "O") {
+      status = result+" won!";
+    } else {
+      status = "Tie!";
+    }
+  } else {
+    if (result == computer) {
+      status = "You Lost!";
+    } else if (result == "Tie") {
+      status = "Tie!";
+    } else {
+      status = "You Won!";
+    }
+  }
+
+  return status;
 }
 
+// Returns a copy of a given object (If you used the assignment operator, you would only create a reference to the existing object)
 function copyObject(object) {
   var copy = {};
 
   for (var key in object) {
     copy[key] = object[key];
   }
+  
   return copy;
 }
 
-function updateUI(board) {
+// Updates the board UI, given the board object
+function updateBoardUI(board, status) {
+  setText("status_label", "Current Player: "+currentPlayer);
+    
+  setText("scoreX_label", "X - "+scoreX);
+  setText("scoreO_label", "O - "+scoreO);
+
+  // Updates game board
   for (var position in board) {
     var buttonID = position + "_button";
+    var imageURL = "";
     
     if (board[position] == "X") {
-      setProperty(buttonID, "image", "icon://fa-times"); // X
+      imageURL = "icon://fa-times"; // X
     } else if (board[position] == "O") {
-      setProperty(buttonID, "image", "icon://fa-circle-o"); // O
-    } else {
-      setProperty(buttonID, "image", "");
+      imageURL = "icon://fa-circle-o"; // O
     }
+    
+    setProperty(buttonID, "image", imageURL);
+  }
+  
+  // Update the status label if game ended
+  if (status != undefined) {
+    setText("status_label", status);
   }
 }
 
-function reset() {
+// Resets the main menu
+function resetMain() {
+  computer = "";
+  scoreX = 0;
+  scoreO = 0;
+  
+  showElement("singlePlayer_button");
+  hideElement("playerX_button");
+  hideElement("playerO_button");
+}
+
+// Resets the gameplay screen
+function resetBoard() {
   currentPlayer = "X";
-  computerType = "";
   turn = 1;
   gameOver = false;
   
@@ -260,11 +307,16 @@ function reset() {
     bottomRight : "",
   };
   
-  updateUI(board);
+  updateBoardUI(board);
   
-  showElement("onePlayer_button");
-  hideElement("playerX_button");
-  hideElement("playerO_button");
-  
-  setText("status_label", "Current Player: "+currentPlayer);
+  // If computer is X, prompt first move
+  if (computer == "X") {
+    playerMove(getComputerMove(board));
+  }
 }
+
+// Image Sources
+// board.jpg (Empty Tic-Tac-Toe Board): https://i.pinimg.com/originals/7f/d6/54/7fd654e4ed2675f4606bd72177eb1fb2.jpg
+// titleImage.png (Tic-Tac-Toe Art): https://cdn3.vectorstock.com/i/1000x1000/73/02/tic-tac-toe-xo-game-vector-23217302.jpg
+// icon://fa-times (X Tile): Icon provided by Code.org
+// icon://fa-circle-o (O Tile): Icon provided by Code.org
