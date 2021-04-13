@@ -1,8 +1,6 @@
-# README for Tic-Tac-Toe #
+# Tic-Tac-Toe
 
-This is the README file for the Tic-Tac-Toe app. It's a great place to write
-down some notes about how your app works. For starters, here is some information
-about the other files in this folder.
+A simple Tic-Tac-Toe app I created for AP Computer Science Principles. Includes both single player and two player support.
 
 The files in this folder contain everything you need to run your app:
 
